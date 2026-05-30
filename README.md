@@ -34,21 +34,26 @@ This was first executed using 10 examples and subsequently run using 20 examples
 ## Repository Structure
 
 ```text
-Micromanage_your_agents/
+Micro-Manage-Your-Agent/
 │
-├── blog_eval_lab
-├── blog_eval_langsmith.ipynb   # Main lab notebook
-├── .env                        # Local credentials (not committed)
+├── blog_eval_langsmith.ipynb     # Main lab notebook (20-example run, A/B comparison, scale check)
+├── requirements.txt              # Python dependencies
+├── .env                          # Local credentials (not committed)
+├── .gitignore
 │
 ├── Screenshots/
-│   ├── Screenshot 2026-05-30 074207.png   # LangSmith A/B comparison dashboard
-│   ├── Screenshot 2026-05-30 074526.png   # Per-example score table
-│   └── Screenshot 2026-05-30 074823.png   # gpt-4o experiment detail + latency
+│   ├── Ten_Example/
+│   │   ├── Screenshot 2026-05-30 074207.png   # 10-example A/B comparison dashboard
+│   │   ├── Screenshot 2026-05-30 074526.png   # 10-example per-example score table
+│   │   └── Screenshot 2026-05-30 074823.png   # gpt-4o experiment detail + latency
+│   └── Twenty Example/
+│       ├── Screenshot 2026-05-30 123620.png   # 20-example experiment overview
+│       └── Screenshot 2026-05-30 124019.png   # 20-example per-example comparison
 │
-├── evaluation_summary.md     # Methodology, results, and key findings
-├── evaluation_report.md      # Full analysis — error patterns, per-example scores, recommendations
-├── optimization_summary.md   # Cost-performance analysis and model selection guide
-└── README.md                 # This file
+├── evaluation_summary.md         # Methodology, results, and key findings (both runs)
+├── evaluation_report.md          # Full analysis — error patterns, scale comparison, recommendations
+├── optimization_summary.md       # Cost-performance analysis and model selection guide
+└── README.md                     # This file
 ```
 
 ---
@@ -107,11 +112,12 @@ Open `blog_eval_lab/blog_eval_langsmith.ipynb` and run all cells **top to bottom
 | Section | Description |
 | --- | --- |
 | **1. Tracing** | `@traceable` smoke-test — one live blog post logged to LangSmith |
-| **2. Dataset** | 10 blog-writing examples pushed to `blog-writing-eval` in LangSmith |
+| **2. Dataset** | 20 blog-writing examples pushed to `blog-writing-eval-20` in LangSmith |
 | **3. Experiment** | `gpt-4o-mini` target + 3 LLM-as-judge evaluators via `client.evaluate()` |
-| **4. A/B Comparison** | Same dataset evaluated with `gpt-4o` for side-by-side model comparison |
+| **4. A/B Comparison** | Same 20 examples evaluated with `gpt-4o` for side-by-side model comparison |
 | **5. Results** | Mean scores per dimension and per model in a pandas DataFrame |
 | **6. Reproducibility** | Same input run twice to demonstrate output variance at `temperature=0.7` |
+| **7. Scale Check** | 10-example vs 20-example results compared — delta per dimension, stability verdict |
 
 ---
 
