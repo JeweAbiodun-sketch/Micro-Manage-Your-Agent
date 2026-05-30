@@ -1,1 +1,4 @@
 .env
+blog_eval_lansmith.ipynb
+blog_eval_lansmith.py
+.gitignore
