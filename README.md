@@ -27,6 +27,8 @@ This project implements a full LangSmith evaluation pipeline for a blog content 
 - Evaluate `gpt-4o-mini` and `gpt-4o` side-by-side on the same dataset
 - Identify failure patterns and make data-driven model recommendations
 
+This was first executed using 10 examples and subsequently run using 20 examples to compare results.
+
 ---
 
 ## Repository Structure
