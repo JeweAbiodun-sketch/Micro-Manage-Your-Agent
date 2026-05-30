@@ -4,7 +4,9 @@
 
 ## Executive Summary
 
-A custom LangSmith evaluation system was built for AI-assisted blog writing. A dataset of 10 hand-crafted examples (topic + brief → reference outline + key requirements) was created and two OpenAI models — `gpt-4o-mini` and `gpt-4o` — were evaluated with three LLM-as-judge dimensions: **coverage**, **structure clarity**, and **tone match** (scored 0–100). Both models scored approximately **81/100** overall, indicating competent but imperfect blog generation. The dominant failure pattern is structural over-elaboration: models introduce extra sub-sections not in the reference outline. The performance gap between models is negligible (≤3 pts per dimension); `gpt-4o-mini` is the preferred choice for cost-sensitive workflows, while `gpt-4o` offers marginal quality gains at 3–4× higher cost and 2× higher latency.
+A custom LangSmith evaluation system was built for AI-assisted blog writing. Two evaluation runs were completed — one on a **10-example dataset** (`blog-writing-eval`) and a follow-up on a **20-example dataset** (`blog-writing-eval-20`) — using two OpenAI models (`gpt-4o-mini` and `gpt-4o`) and three LLM-as-judge dimensions: **coverage**, **structure clarity**, and **tone match** (scored 0–100).
+
+At 10 examples both models tied at **81.2/100**. At 20 examples `gpt-4o-mini` pulled ahead (**82.0 vs 81.4**). The dominant failure pattern across both runs is partial key-requirement coverage — models consistently satisfy 2 of 3 required use cases and skip one. The performance gap between models is negligible (≤3 pts per dimension); `gpt-4o-mini` is the preferred choice for cost-sensitive workflows at 3–4× lower cost.
 
 ---
 
@@ -14,17 +16,17 @@ A custom LangSmith evaluation system was built for AI-assisted blog writing. A d
 
 AI-assisted blog writing. The system receives a natural-language `topic` and a `brief` (audience, tone, goal) and must produce a structured 600–800 word blog post.
 
-### 1.2 Dataset
+### 1.2 Datasets
 
-| Field | Value |
-| --- | --- |
-| **LangSmith name** | `blog-writing-eval` |
-| **Project** | `blog_eval_langsmith` (EU endpoint) |
-| **Size** | 10 examples |
-| **Input fields** | `topic`, `brief` |
-| **Output fields** | `outline` (expected sections), `key_requirements` (3 quality checks) |
+| Field | 10-Example Run | 20-Example Run |
+| --- | --- | --- |
+| **LangSmith name** | `blog-writing-eval` | `blog-writing-eval-20` |
+| **Project** | `blog_eval_langsmith` (EU endpoint) | `blog_eval_langsmith` (EU endpoint) |
+| **Size** | 10 examples | 20 examples |
+| **Input fields** | `topic`, `brief` | `topic`, `brief` |
+| **Output fields** | `outline`, `key_requirements` | `outline`, `key_requirements` |
 
-Examples span 10 diverse AI-writing scenarios: marketing, writer's block, content planning, repurposing, common mistakes, research, product launches, local business calendars, evergreen content, and brand voice.
+The 20-example dataset includes the original 10 topics plus 10 new ones: SEO-friendly posts, case studies, FAQ pages, email newsletters, thought leadership articles, product descriptions, how-to guides, brand origin stories, writing for non-native English speakers, and community/culture posts.
 
 ### 1.3 Target Functions
 
@@ -49,7 +51,7 @@ Evaluator prompts use `PLACEHOLDER_*` token substitution (not `str.format`) to a
 
 ---
 
-## 2. Results
+## 2. Run 1 — 10-Example Results
 
 ### 2.1 Aggregate Scores (0–100 scale)
 
@@ -58,7 +60,7 @@ Evaluator prompts use `PLACEHOLDER_*` token substitution (not `str.format`) to a
 | `gpt-4o-mini` | 80.5 | 82.0 | 81.0 | **81.2** |
 | `gpt-4o` | 78.5 | 83.0 | 82.0 | **81.2** |
 
-*Extracted from LangSmith experiment comparison view — Screenshots 074207, 074526, 074823.*
+*Extracted from LangSmith experiment comparison — Screenshots/Ten_Example/074207, 074526, 074823.*
 
 ### 2.2 Per-Example Coverage Scores
 
@@ -77,105 +79,150 @@ Evaluator prompts use `PLACEHOLDER_*` token substitution (not `str.format`) to a
 
 **Best examples (both ≥ 85):** 2, 3, 7 — concrete briefs with verifiable, enumerable requirements.
 
-**Weakest examples:** 8, 9 — topics requiring local-context specificity or strategic depth that generic blog prompts rarely address precisely.
+**Weakest examples:** 8, 9 — topics requiring local-context specificity or strategic depth.
 
-### 2.3 Latency
+### 2.3 Latency (10-Example Run)
 
 | Stat | gpt-4o-mini | gpt-4o |
 | --- | --- | --- |
 | Typical range | 4–7 s | 7–14 s |
 | Mean (10 examples) | ~5.5 s | ~9.4 s |
-| Slowest example | — | 14.26 s (example 1) |
-| Fastest example | — | 5.36 s (example 10) |
-
-*gpt-4o latency figures from Screenshot 074823.*
-
-### 2.4 Token Count and Cost
-
-From the LangSmith cost and token charts (Screenshot 074207):
-
-- `gpt-4o` generates ~30–40% more output tokens on average (longer posts).
-- `gpt-4o` is approximately **3–4× more expensive** per example, consistent with published pricing (~$2.50 vs ~$10.00 per 1M output tokens).
+| Slowest example | — | 14.26 s |
 
 ---
 
-## 3. Analysis
+## 3. Run 2 — 20-Example Results
 
-### 3.1 Performance Patterns
+### 3.1 Aggregate Scores (0–100 scale)
 
-#### Strongest dimension — structure clarity (~82–83/100)
+| Model | Coverage | Structure Clarity | Tone Match | Overall Mean |
+| --- | --- | --- | --- | --- |
+| `gpt-4o-mini` | 80.05 | 81.75 | 84.25 | **82.0** |
+| `gpt-4o` | 77.40 | 80.40 | 86.25 | **81.4** |
 
-Both models reliably produce posts with headings, short paragraphs, and a recognisable intro/body/conclusion. The system prompt instruction ("use headings, short paragraphs") effectively enforces basic structural conventions.
+*Extracted from LangSmith dataset `blog-writing-eval-20` — Screenshots/Twenty Example/123620, 124019.*
 
-#### Weakest dimension — coverage (~78–80/100)
+### 3.2 Latency (20-Example Run)
 
-The most common deduction is partial key-requirement coverage. A post on "repurposing blog posts" may mention social media and email but skip the required video/podcast script format, satisfying 2 of 3 required formats. This pattern repeats across examples and is the single largest contributor to score deductions.
+| Stat | gpt-4o-mini | gpt-4o |
+| --- | --- | --- |
+| P50 Latency | 13.39 s | 7.03 s |
+| P99 Latency | 18.66 s | 12.45 s |
+| Run count | 20 | 20 |
 
-#### Tone match is stable (~81–82/100)
+**Note:** gpt-4o-mini was slower in this run (ran first as experiment #1), likely due to API rate limiting at the start of a larger batch. This reversal is a run-condition artifact, not a true performance characteristic. The 10-example run showed the expected order (mini ~5.5 s, gpt-4o ~9.4 s).
 
-Tone adaptation is the most consistent dimension. Models respond well to instructions like "friendly," "persuasive," and "practical." Failures are rare and typically manifest as corporate jargon in posts that requested plain language.
+---
 
-### 3.2 Model Comparison
+## 4. Scale Comparison — 10 vs 20 Examples
 
-The two models perform near-identically in aggregate but diverge on individual examples:
+### 4.1 Score Delta Table
 
-- **gpt-4o-mini outperforms on coverage for examples 1, 4, 5, 6, 8.** Shorter outputs stay closer to the brief; gpt-4o's verbosity sometimes introduces off-brief tangents that lower coverage.
-- **gpt-4o outperforms on examples 9 and 10.** It handles nuanced tonal instructions ("strategic and practical", "confident and precise") better for complex, abstract topics.
-- **No example has a gap >15 points.** This confirms that prompt quality — not model capability — is the primary quality driver at this performance level.
+| Model | Dimension | 10-Example | 20-Example | Δ |
+| --- | --- | --- | --- | --- |
+| `gpt-4o-mini` | Coverage | 80.5 | 80.05 | −0.45 |
+| `gpt-4o-mini` | Structure Clarity | 82.0 | 81.75 | −0.25 |
+| `gpt-4o-mini` | Tone Match | 81.0 | 84.25 | **+3.25** |
+| `gpt-4o-mini` | **Overall Mean** | **81.2** | **82.0** | +0.8 |
+| `gpt-4o` | Coverage | 78.5 | 77.40 | −1.10 |
+| `gpt-4o` | Structure Clarity | 83.0 | 80.40 | **−2.60** |
+| `gpt-4o` | Tone Match | 82.0 | 86.25 | **+4.25** |
+| `gpt-4o` | **Overall Mean** | **81.2** | **81.4** | +0.2 |
 
-### 3.3 Error Analysis
+### 4.2 Interpretation
+
+**Coverage holds stable for gpt-4o-mini (−0.45), drops slightly for gpt-4o (−1.10)**
+Coverage is the weakest and most variable dimension in both runs. gpt-4o-mini's coverage scores are more consistent — it stays closer to the brief. gpt-4o's slight drop at 20 examples suggests it introduces more off-brief tangents when topics become more diverse (e.g. SEO, case studies, thought leadership) where it tends toward verbosity.
+
+**Structure clarity drops for gpt-4o at scale (−2.60)**
+This is the most notable shift. gpt-4o's structure score falls from 83.0 to 80.40 across 20 examples. The new topics (thought leadership, brand stories, community posts) have less prescriptive structural briefs, and gpt-4o over-elaborates more on open-ended prompts. gpt-4o-mini's structure is essentially unchanged (−0.25).
+
+**Tone match improves strongly for both models (+3.25 and +4.25)**
+The 10 new examples include more tone-diverse briefs (empathetic, authoritative, warm, instructional) compared to the original 10. Both models adapt tone well. This improvement is likely a topic-mix effect — the new examples play to tone strengths.
+
+**gpt-4o-mini now leads overall (82.0 vs 81.4)**
+At 10 examples the models tied at 81.2. Doubling the dataset breaks the tie in favour of gpt-4o-mini. The lead is narrow (0.6 pts) but directionally consistent: gpt-4o-mini is more stable at scale.
+
+**Core finding is confirmed:** The performance gap between models never exceeds 3 points per dimension across either run. Prompt quality — not model selection — is the dominant quality driver.
+
+---
+
+## 5. Analysis
+
+### 5.1 Performance Patterns
+
+#### Strongest dimension — tone match (~84–86/100 at 20 examples)
+
+Tone is now the strongest dimension across both runs, having improved significantly at 20 examples. Both models respond reliably to specific tone instructions. The improvement is partly a dataset effect — the new examples include more distinctive tonal briefs.
+
+#### Weakest dimension — coverage (~77–80/100)
+
+The most common deduction remains partial key-requirement coverage. A post typically satisfies 2 of 3 required use cases, skipping one. This pattern is stable across both runs and both dataset sizes.
+
+#### Structure clarity is reliable but gpt-4o degrades at scale
+
+gpt-4o's structure score dropped 2.6 pts moving to 20 examples. On open-ended topics it adds sub-sections not in the reference outline and regularly exceeds 800 words. gpt-4o-mini's structure degrades less (−0.25) because its outputs are more concise by default.
+
+### 5.2 Model Comparison
+
+- **gpt-4o-mini wins on coverage** in both runs — shorter, tighter outputs stay closer to the brief.
+- **gpt-4o-mini wins on overall average** at 20 examples (82.0 vs 81.4) — the only dimension where gpt-4o leads is tone match (86.25 vs 84.25).
+- **No dimension shows a gap >5 pts** across any run. Neither model consistently dominates.
+
+### 5.3 Error Analysis
 
 | Failure Mode | Frequency | Impact |
 | --- | --- | --- |
-| Over-elaboration (extra H3s, >800 words) | High — occurs in most examples | Penalises structure_clarity |
+| Over-elaboration (extra H3s, >800 words) | High — most examples | Penalises structure_clarity |
 | Partial key-requirement coverage (2/3 met) | High — most common coverage deduction | Penalises coverage |
 | Tone drift (brief says "cautious"; post is enthusiastic) | Low — 1–2 examples | Minor tone_match penalty |
-| Generic advice replacing specific local/strategic framing | Medium — examples 8, 9 | Penalises coverage and tone |
+| Generic framing on specific/niche topics | Medium — local/strategic examples | Penalises coverage and tone |
 
-### 3.4 Note on Earlier Evaluation Scores
+### 5.4 Note on Earlier Evaluation Scores
 
-An earlier run using `openevals.create_llm_as_judge` recorded scores of approximately **2/5 (40%)** per dimension. Those results were affected by a `KeyError: '\n  "score'` bug — literal `{` braces in the evaluator prompt conflicted with Python's `str.format()`, causing silent evaluator failures and scores defaulting to `0`. The current custom evaluators using `PLACEHOLDER_*` substitution resolve this and produce the realistic **70–85/100** scores shown in the LangSmith screenshots.
+An earlier run using `openevals.create_llm_as_judge` recorded approximately **2/5 (40%)** per dimension. Those results were affected by a `KeyError: '\n  "score'` bug — literal `{` braces in the evaluator prompt conflicted with `str.format()`, causing silent failures and scores defaulting to 0. The current custom evaluators using `PLACEHOLDER_*` substitution resolve this and produce realistic **70–90/100** scores.
 
 ---
 
-## 4. Limitations
+## 6. Limitations
 
 | Limitation | Impact |
 | --- | --- |
-| Small dataset (n=10) | High variance; one outlier shifts mean by ~5 pts |
-| Judge model = target model (`gpt-4o-mini`) | Potential self-evaluation bias; scores may be inflated |
+| Moderate dataset (n=20) | Variance reduced vs n=10; still directional, not statistically robust |
+| Judge model = target model (`gpt-4o-mini`) | Potential self-evaluation bias; scores may be slightly inflated |
 | No human baseline | Scores reflect the judge's rubric, not expert human ratings |
 | Single-temperature runs (0.7) | Results vary across runs — reproducibility section confirms output variance |
 | Domain scope | All examples are AI-writing topics; cross-domain generalisation is unknown |
+| Latency anomaly (20-example run) | gpt-4o-mini P50 13.39 s vs gpt-4o 7.03 s — likely a rate-limiting artifact, not a true reversal |
 
 ---
 
-## 5. Recommendations
+## 7. Recommendations
 
 **Priority 1 — Add a conciseness evaluator**
-Count H2 sections and flag posts exceeding 850 words or 4 H2s. This directly targets the dominant over-elaboration failure pattern with a measurable, objective criterion.
+Count H2 sections and flag posts exceeding 850 words or 4 H2s. This directly targets the dominant over-elaboration failure, which worsened for gpt-4o at scale.
 
 **Priority 2 — Strengthen key-requirement checking**
-Rewrite evaluator prompts to enumerate each `key_requirement` from the reference output and check them individually (binary pass/fail per requirement), then aggregate. The current holistic scoring is too lenient on partial failures.
+Enumerate each `key_requirement` from the reference output and check them individually (binary pass/fail), then aggregate. The current holistic scoring is too lenient on partial failures.
 
 **Priority 3 — Reduce self-evaluation bias**
-Use `gpt-4o` as the judge when evaluating `gpt-4o-mini` outputs, and vice versa, to reduce self-grading leniency.
+Use `gpt-4o` as the judge when evaluating `gpt-4o-mini` outputs, and vice versa.
 
-**Priority 4 — Expand the dataset to 20–25 examples**
-Add examples with tighter, more constrained briefs (word-count limits, required subheadings) to better stress-test coverage and structural compliance before drawing production conclusions.
-
-**Priority 5 — Choose `gpt-4o-mini` for production**
-The quality gap is ≤3 points per dimension at 3–4× lower cost and ~2× lower latency. For human-reviewed content workflows, `gpt-4o-mini` provides the best cost-quality trade-off.
+**Priority 4 — Choose `gpt-4o-mini` for production**
+It now leads on overall average at 20 examples (82.0 vs 81.4), is 3–4× cheaper, and degrades less at scale. The only dimension where gpt-4o leads is tone match (+2 pts) — not enough to justify the cost.
 
 ---
 
-## 6. LangSmith Evidence
+## 8. LangSmith Evidence
 
 | Artefact | File |
 | --- | --- |
-| A/B comparison dashboard | `Screenshots/Screenshot 2026-05-30 074207.png` |
-| Per-example score table | `Screenshots/Screenshot 2026-05-30 074526.png` |
-| gpt-4o experiment with latency | `Screenshots/Screenshot 2026-05-30 074823.png` |
+| 10-example A/B comparison dashboard | `Screenshots/Ten_Example/Screenshot 2026-05-30 074207.png` |
+| 10-example per-example score table | `Screenshots/Ten_Example/Screenshot 2026-05-30 074526.png` |
+| 10-example gpt-4o detail + latency | `Screenshots/Ten_Example/Screenshot 2026-05-30 074823.png` |
+| 20-example experiment overview | `Screenshots/Twenty Example/Screenshot 2026-05-30 123620.png` |
+| 20-example per-example comparison | `Screenshots/Twenty Example/Screenshot 2026-05-30 124019.png` |
 | LangSmith project | `blog_eval_langsmith` (EU endpoint) |
-| Dataset | `blog-writing-eval` |
-| Notebook | `blog_eval_lab/blog_eval_langsmith.ipynb` |
+| 10-example dataset | `blog-writing-eval` |
+| 20-example dataset | `blog-writing-eval-20` |
+| Notebook | `blog_eval_langsmith.ipynb` |

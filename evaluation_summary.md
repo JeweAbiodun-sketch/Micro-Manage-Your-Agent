@@ -4,12 +4,14 @@
 
 **Domain:** AI-assisted blog writing. The system receives a `topic` and a `brief` (audience, tone, goal) and must produce a structured 600–800 word blog post with clear headings, short paragraphs, and a voice that matches the brief.
 
-**Dataset:** `blog-writing-eval` — 10 hand-crafted examples covering diverse sub-topics: small-business marketing, writer's block, content planning, post repurposing, common AI mistakes, research, product launches, local business calendars, evergreen tutorials, and brand voice.
+**Datasets:**
 
-Each example has:
+| Dataset | Examples | Topics covered |
+| --- | --- | --- |
+| `blog-writing-eval` | 10 | Marketing, writer's block, content planning, repurposing, AI mistakes, research, product launches, local calendars, evergreen tutorials, brand voice |
+| `blog-writing-eval-20` | 20 | All of the above + SEO posts, case studies, FAQ pages, email newsletters, thought leadership, product descriptions, how-to guides, brand stories, non-native English writing, community posts |
 
-- **Inputs:** `topic` + `brief`
-- **Reference outputs:** `outline` (expected sections) + `key_requirements` (3 specific quality checks)
+Each example has **inputs** (`topic` + `brief`) and **reference outputs** (`outline` + `key_requirements`).
 
 ---
 
@@ -25,65 +27,69 @@ Each example has:
 | `structure_clarity` | Clear intro, descriptive H2 sections, short paragraphs, concise conclusion? |
 | `tone_match` | Does the tone and language match the specified audience and brief? |
 
-**Infrastructure:** LangSmith EU endpoint, project `blog_eval_langsmith`, dataset `blog-writing-eval`, `max_concurrency=2`.
+**Infrastructure:** LangSmith EU endpoint, project `blog_eval_langsmith`, `max_concurrency=2`.
 
 ---
 
 ## Results
 
-### Model Scores (0–100 scale)
+### 10-Example Run
 
 | Model | Coverage | Structure Clarity | Tone Match | Overall Mean |
 | --- | --- | --- | --- | --- |
 | `gpt-4o-mini` | 80.5 | 82.0 | 81.0 | **81.2** |
 | `gpt-4o` | 78.5 | 83.0 | 82.0 | **81.2** |
 
-*Scores extracted from LangSmith experiment comparison (Screenshots 074207, 074526, 074823).*
+### 20-Example Run
 
-### Per-Example Coverage Scores
+| Model | Coverage | Structure Clarity | Tone Match | Overall Mean |
+| --- | --- | --- | --- | --- |
+| `gpt-4o-mini` | 80.05 | 81.75 | 84.25 | **82.0** |
+| `gpt-4o` | 77.40 | 80.40 | 86.25 | **81.4** |
 
-| # | Topic | gpt-4o-mini | gpt-4o |
-| --- | --- | --- | --- |
-| 1 | AI for small business marketing | 85 | 80 |
-| 2 | Overcoming writer's block | 85 | 85 |
-| 3 | Planning a month of content | 85 | 85 |
-| 4 | Repurposing blog posts | 80 | 70 |
-| 5 | Common AI content mistakes | 80 | 75 |
-| 6 | AI for topic research | 85 | 80 |
-| 7 | Writing a product launch post | 85 | 85 |
-| 8 | Local business content calendar | 80 | 70 |
-| 9 | Creating evergreen tutorials | 70 | 75 |
-| 10 | Maintaining brand voice | 70 | 80 |
+### Scale Comparison (10 → 20 Examples)
+
+| Model | Coverage Δ | Structure Δ | Tone Δ | Avg Δ | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| `gpt-4o-mini` | −0.45 | −0.25 | **+3.25** | +0.8 | Stable — slight improvement |
+| `gpt-4o` | −1.10 | **−2.60** | **+4.25** | +0.2 | Structure degrades at scale |
 
 ---
 
 ## Key Findings
 
-**Both models score ~81/100 overall** — competent but with clear room for improvement.
+**gpt-4o-mini leads at 20 examples (82.0 vs 81.4)**
+The models tied at 10 examples (81.2 each). Doubling the dataset breaks the tie in favour of gpt-4o-mini, which is more consistent across diverse topic types.
 
-**Strongest dimension: structure_clarity (~82–83/100)**
-Both models reliably produce posts with headings, paragraphs, intro, and conclusion. The system prompt instructions ("use headings, short paragraphs") are effective.
+**Coverage remains the weakest dimension for both models (~77–80/100)**
+The most common failure is partial key-requirement coverage: posts satisfy 2 of 3 required formats or use cases and skip one. This pattern is stable across both runs.
 
-**Weakest dimension: coverage (~78–80/100)**
-The most common failure is partial key-requirement coverage: posts typically satisfy 2 of 3 required use cases or formats, skipping one. Examples 8 and 9 (local calendar, evergreen tutorials) score lowest because their briefs require domain-specific framing that generic blog prompts rarely produce.
+**Tone match is now the strongest dimension (~84–86/100 at 20 examples)**
+Tone match improved significantly at 20 examples (+3.25 for mini, +4.25 for gpt-4o). The new topics have more distinctive tonal briefs (empathetic, authoritative, instructional) that both models handle well.
+
+**gpt-4o structure degrades at scale (−2.60)**
+gpt-4o's structure clarity dropped from 83.0 to 80.40 at 20 examples. On open-ended topics it over-elaborates — adding extra sub-sections and exceeding 800 words. gpt-4o-mini's structure is essentially unchanged (−0.25).
+
+**The model gap is still negligible (≤3 pts per dimension)**
+Prompt quality — not model selection — remains the primary quality driver. Neither model dominates consistently across all topics.
 
 **Dominant failure pattern: over-elaboration**
-Models introduce extra H3 sub-sections not in the reference outline and frequently exceed 800 words, which the structure judge penalises.
-
-**Model gap is negligible**
-gpt-4o-mini and gpt-4o differ by ≤3 points per dimension. Prompt quality, not model capability, is the primary quality driver at this performance level.
+Models introduce extra H3 sub-sections not in the reference outline and frequently exceed 800 words. This worsened for gpt-4o at 20 examples.
 
 ---
 
 ## Limitations
 
-- **Small dataset (n=10):** One outlier shifts the mean by ~5 points; conclusions are directional, not statistically robust.
-- **Self-evaluation bias:** The judge model (`gpt-4o-mini`) evaluates the same model's outputs, which may inflate scores.
+- **Moderate dataset (n=20):** Variance reduced vs n=10; results are directional but not statistically robust.
+- **Self-evaluation bias:** The judge model (`gpt-4o-mini`) evaluates outputs from the same model family, which may inflate scores.
 - **No human baseline:** Scores reflect the judge's rubric interpretation, not expert human ratings.
 - **Single domain:** All examples are AI-writing topics; generalisability to other domains is unknown.
+- **Latency anomaly (20-example run):** gpt-4o-mini ran slower than gpt-4o in the 20-example batch (P50: 13.39 s vs 7.03 s), likely due to rate limiting on the first experiment. The 10-example run showed the expected order.
 
 ---
 
 ## Recommendation
 
-Add a **conciseness evaluator** that counts H2 sections and flags posts exceeding 850 words or 4 H2 sections. This directly targets the over-elaboration failure — the most frequent and consistent quality gap across both models and all 10 examples.
+Use `gpt-4o-mini` for production. It leads on overall average at 20 examples, is 3–4× cheaper, degrades less at scale, and the only dimension where gpt-4o leads (tone match, +2 pts) does not justify the cost difference for human-reviewed content workflows.
+
+As a next step, add a **conciseness evaluator** that counts H2 sections and flags posts exceeding 850 words. This targets the dominant over-elaboration failure — the most consistent quality gap across both models, both runs, and all 20 examples.

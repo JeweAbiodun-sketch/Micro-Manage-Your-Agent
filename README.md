@@ -123,22 +123,30 @@ Three LLM-as-judge evaluators score each blog post on a **0–100 scale**:
 | `structure_clarity` | Clear intro, descriptive H2 sections, short paragraphs, concise conclusion? |
 | `tone_match` | Does the tone and language match the specified audience and brief? |
 
-### Model Comparison
+### Model Comparison — 10-Example Run
 
 | Model | Coverage | Structure Clarity | Tone Match | Overall | Avg Latency | Relative Cost |
 | --- | --- | --- | --- | --- | --- | --- |
-| `gpt-4o-mini` | 80.5 | 82.0 | 81.0 | **81.2** | ~5–7 s | 1× |
+| `gpt-4o-mini` | 80.5 | 82.0 | 81.0 | **81.2** | ~5.5 s | 1× |
 | `gpt-4o` | 78.5 | 83.0 | 82.0 | **81.2** | ~9.4 s | ~3–4× |
+
+### Model Comparison — 20-Example Run
+
+| Model | Coverage | Structure Clarity | Tone Match | Overall | Relative Cost |
+| --- | --- | --- | --- | --- | --- |
+| `gpt-4o-mini` | 80.05 | 81.75 | 84.25 | **82.0** | 1× |
+| `gpt-4o` | 77.40 | 80.40 | 86.25 | **81.4** | ~3–4× |
 
 ---
 
 ## Key Findings
 
-- **Both models score ~81/100 overall** — competent first drafts, but with consistent gaps in coverage
-- **Dominant failure: over-elaboration** — models introduce extra sub-sections not in the reference outline
-- **Coverage is the weakest dimension** — posts typically satisfy 2 of 3 key requirements, skipping one
-- **Model gap is negligible** — gpt-4o-mini and gpt-4o differ by ≤3 points per dimension
-- **Recommendation: use `gpt-4o-mini`** for human-reviewed workflows — same quality at 3–4× lower cost
+- **gpt-4o-mini leads at 20 examples (82.0 vs 81.4)** — models tied at 10 examples; doubling the dataset breaks the tie
+- **Coverage is the weakest dimension** — posts satisfy 2 of 3 key requirements across both runs; the most consistent failure
+- **Tone match improved significantly at scale** (+3.25 for mini, +4.25 for gpt-4o) — diverse topic briefs play to tone strengths
+- **gpt-4o structure degrades at scale (−2.60)** — over-elaborates on open-ended topics; gpt-4o-mini holds steady (−0.25)
+- **Model gap is negligible (≤3 pts per dimension)** — prompt quality drives results more than model choice
+- **Recommendation: use `gpt-4o-mini`** for human-reviewed workflows — better average at 20 examples, 3–4× lower cost
 
 > For full analysis, error breakdowns, and recommendations see [`evaluation_report.md`](evaluation_report.md)
 
